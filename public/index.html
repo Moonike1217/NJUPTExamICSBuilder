@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>南邮考试日历生成器</title>
+  <link href="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      padding-top: 20px;
+    }
+    .container {
+      max-width: 800px;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      margin-bottom: 30px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #7952b3;
+    }
+    .exam-form {
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #f8f9fa;
+    }
+    .btn-purple {
+      background-color: #7952b3;
+      border-color: #7952b3;
+      color: white;
+    }
+    .btn-purple:hover {
+      background-color: #614092;
+      border-color: #614092;
+      color: white;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    .tab-content {
+      padding-top: 20px;
+    }
+    .nav-tabs .nav-link.active {
+      color: #7952b3;
+      border-bottom-color: #7952b3;
+      font-weight: bold;
+    }
+    .nav-tabs .nav-link {
+      color: #6c757d;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>南邮考试日历生成器</h1>
+      <p class="lead">将考试信息转换为 ICS 日历文件，方便导入到各种日历应用</p>
+    </div>
+
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="alert alert-info">
+          <h5>使用说明：</h5>
+          <ol>
+            <li>上传教务处考试安排Excel文件</li>
+            <li>输入学号查询您的考试信息</li>
+            <li>点击"生成日历文件"按钮</li>
+            <li>下载生成的 ICS 文件</li>
+            <li>将 ICS 文件导入到您的日历应用（如 Google 日历、Apple 日历等）</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Excel文件上传区域 -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">第一步：上传考试安排Excel文件</h5>
+      </div>
+      <div class="card-body">
+        <form id="uploadForm" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="excelFile" class="form-label">选择Excel文件</label>
+            <input class="form-control" type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls">
+            <div class="form-text">请上传教务处发布的考试安排Excel文件</div>
+          </div>
+          <button type="submit" class="btn btn-primary">上传文件</button>
+          <div id="uploadStatus" class="mt-3 d-none"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 学号查询区域 -->
+    <div class="card mb-4">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">第二步：输入学号查询考试信息</h5>
+      </div>
+      <div class="card-body">
+        <form id="searchForm">
+          <div class="mb-3">
+            <label for="studentId" class="form-label">学号</label>
+            <input type="text" class="form-control" id="studentId" name="studentId" placeholder="例如：B12345678" required>
+            <div class="form-text">请输入完整学号（B、Q或F开头，共9位）</div>
+          </div>
+          <button type="submit" class="btn btn-primary">查询考试信息</button>
+          <div id="searchStatus" class="mt-3 d-none"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 考试信息展示区域 -->
+    <div id="examContainer" class="d-none">
+      <div class="card mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">第三步：确认考试信息</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="selectAll">
+                      <label class="form-check-label" for="selectAll">全选</label>
+                    </div>
+                  </th>
+                  <th>课程名称</th>
+                  <th>任课教师</th>
+                  <th>日期</th>
+                  <th>开始时间</th>
+                  <th>结束时间</th>
+                  <th>考试地点</th>
+                </tr>
+              </thead>
+              <tbody id="examTableBody">
+                <!-- 考试数据将在这里动态插入 -->
+              </tbody>
+            </table>
+          </div>
+          <button id="generateBtn" class="btn btn-purple">生成日历文件</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 手动输入区域（备用） -->
+    <div class="card mb-4 d-none" id="manualInputCard">
+      <div class="card-header bg-light">
+        <h5 class="mb-0">手动输入考试信息</h5>
+      </div>
+      <div class="card-body">
+        <button type="button" id="showManualInputBtn" class="btn btn-outline-secondary">切换到手动输入模式</button>
+        
+        <div id="manualInputForm" class="d-none mt-3">
+          <div id="manualExamContainer">
+            <!-- 初始考试表单 -->
+            <div class="exam-form" data-index="0">
+              <div class="row">
+                <div class="col-12">
+                  <h5>考试 #1</h5>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label for="courseName0" class="form-label">课程名称</label>
+                  <input type="text" class="form-control" id="courseName0" name="courseName0" required>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label for="date0" class="form-label">日期</label>
+                  <input type="date" class="form-control" id="date0" name="date0" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="startTime0" class="form-label">开始时间</label>
+                  <input type="time" class="form-control" id="startTime0" name="startTime0" required>
+                </div>
+                <div class="col-md-4">
+                  <label for="endTime0" class="form-label">结束时间</label>
+                  <input type="time" class="form-control" id="endTime0" name="endTime0" required>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label for="location0" class="form-label">考试地点</label>
+                  <input type="text" class="form-control" id="location0" name="location0" required>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex mb-4">
+            <button type="button" id="addExamBtn" class="btn btn-outline-secondary">+ 添加另一场考试</button>
+            <button type="button" id="manualGenerateBtn" class="btn btn-purple ms-auto">生成日历文件</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="result" class="d-none">
+      <div class="alert alert-success">
+        <h5>日历文件已生成！</h5>
+        <p>点击下方按钮下载 ICS 文件</p>
+        <a id="downloadLink" href="#" class="btn btn-success">下载日历文件</a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>© 2023 南邮考试日历生成器 | 基于 Express 和 ICS 技术构建</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 全局变量存储查询到的考试数据
+      let currentExamData = [];
+      
+      // Excel文件上传
+      document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const fileInput = document.getElementById('excelFile');
+        if (!fileInput.files.length) {
+          showStatus('uploadStatus', '请选择Excel文件', 'danger');
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append('excelFile', fileInput.files[0]);
+        
+        showStatus('uploadStatus', '正在上传文件...', 'info');
+        
+        fetch('/upload-excel', {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showStatus('uploadStatus', '文件上传成功！请继续输入学号查询考试信息', 'success');
+          } else {
+            showStatus('uploadStatus', '文件上传失败：' + data.error, 'danger');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showStatus('uploadStatus', '上传出错，请重试', 'danger');
+        });
+      });
+      
+      // 学号查询
+      document.getElementById('searchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const studentId = document.getElementById('studentId').value.trim();
+        const studentIdRegex = /^[BQF][0-9]{8}$/;
+        
+        if (!studentIdRegex.test(studentId)) {
+          showStatus('searchStatus', '学号格式不正确，必须是B、Q或F开头，总长度为9位', 'danger');
+          return;
+        }
+        
+        showStatus('searchStatus', '正在查询考试信息...', 'info');
+        
+        fetch('/search-by-student-id', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ studentId })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // 保存查询结果
+            currentExamData = data.examData;
+            
+            // 显示考试信息表格
+            displayExamData(currentExamData);
+            
+            showStatus('searchStatus', '查询成功！请确认考试信息', 'success');
+          } else {
+            showStatus('searchStatus', '查询失败：' + data.error, 'danger');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showStatus('searchStatus', '查询出错，请重试', 'danger');
+        });
+      });
+      
+      // 查询结果展示
+      function displayExamData(examData) {
+        const tableBody = document.getElementById('examTableBody');
+        tableBody.innerHTML = '';
+        
+        examData.forEach((exam, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>
+              <div class="form-check">
+                <input class="form-check-input exam-checkbox" type="checkbox" id="exam${index}" checked>
+              </div>
+            </td>
+            <td>${exam.courseName}</td>
+            <td>${exam.teacher}</td>
+            <td>${exam.date}</td>
+            <td>${exam.startTime}</td>
+            <td>${exam.endTime}</td>
+            <td>${exam.location}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+        
+        // 显示考试信息区域
+        document.getElementById('examContainer').classList.remove('d-none');
+        
+        // 添加全选/取消全选功能
+        const selectAllCheckbox = document.getElementById('selectAll');
+        selectAllCheckbox.checked = true;
+        
+        selectAllCheckbox.addEventListener('change', function() {
+          const checkboxes = document.querySelectorAll('.exam-checkbox');
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+          });
+        });
+      }
+      
+      // 生成日历文件
+      document.getElementById('generateBtn').addEventListener('click', function() {
+        if (currentExamData.length === 0) {
+          alert('请先查询考试信息');
+          return;
+        }
+        
+        // 获取选中的考试
+        const selectedExams = [];
+        const checkboxes = document.querySelectorAll('.exam-checkbox');
+        checkboxes.forEach((checkbox, index) => {
+          if (checkbox.checked) {
+            selectedExams.push(currentExamData[index]);
+          }
+        });
+        
+        if (selectedExams.length === 0) {
+          alert('请至少选择一场考试');
+          return;
+        }
+        
+        generateICSFile(selectedExams);
+      });
+      
+      // 显示手动输入模式
+      document.getElementById('showManualInputBtn').addEventListener('click', function() {
+        const manualInputForm = document.getElementById('manualInputForm');
+        manualInputForm.classList.toggle('d-none');
+        
+        this.textContent = manualInputForm.classList.contains('d-none') ? 
+          '切换到手动输入模式' : '隐藏手动输入表单';
+      });
+      
+      // 手动输入部分
+      let examCount = 1;
+      
+      // 添加考试按钮事件
+      document.getElementById('addExamBtn')?.addEventListener('click', function() {
+        examCount++;
+        const newIndex = examCount - 1;
+        
+        const examDiv = document.createElement('div');
+        examDiv.className = 'exam-form';
+        examDiv.setAttribute('data-index', newIndex);
+        
+        examDiv.innerHTML = `
+          <div class="row">
+            <div class="col-10">
+              <h5>考试 #${examCount}</h5>
+            </div>
+            <div class="col-2 text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger remove-exam">删除</button>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label for="courseName${newIndex}" class="form-label">课程名称</label>
+              <input type="text" class="form-control" id="courseName${newIndex}" name="courseName${newIndex}" required>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label for="date${newIndex}" class="form-label">日期</label>
+              <input type="date" class="form-control" id="date${newIndex}" name="date${newIndex}" required>
+            </div>
+            <div class="col-md-4">
+              <label for="startTime${newIndex}" class="form-label">开始时间</label>
+              <input type="time" class="form-control" id="startTime${newIndex}" name="startTime${newIndex}" required>
+            </div>
+            <div class="col-md-4">
+              <label for="endTime${newIndex}" class="form-label">结束时间</label>
+              <input type="time" class="form-control" id="endTime${newIndex}" name="endTime${newIndex}" required>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <label for="location${newIndex}" class="form-label">考试地点</label>
+              <input type="text" class="form-control" id="location${newIndex}" name="location${newIndex}" required>
+            </div>
+          </div>
+        `;
+        
+        document.getElementById('manualExamContainer').appendChild(examDiv);
+        
+        // 为新添加的删除按钮添加事件
+        examDiv.querySelector('.remove-exam').addEventListener('click', function() {
+          examDiv.remove();
+        });
+      });
+      
+      // 手动生成日历按钮事件
+      document.getElementById('manualGenerateBtn')?.addEventListener('click', function() {
+        const examForms = document.querySelectorAll('#manualExamContainer .exam-form');
+        
+        // 检查表单是否填写完整
+        let formValid = true;
+        examForms.forEach(form => {
+          const inputs = form.querySelectorAll('input[required]');
+          inputs.forEach(input => {
+            if (!input.value) {
+              formValid = false;
+              input.classList.add('is-invalid');
+            } else {
+              input.classList.remove('is-invalid');
+            }
+          });
+        });
+        
+        if (!formValid) {
+          alert('请填写所有必填项');
+          return;
+        }
+        
+        // 收集表单数据
+        const examData = [];
+        examForms.forEach(examForm => {
+          const index = examForm.getAttribute('data-index');
+          
+          examData.push({
+            courseName: document.getElementById(`courseName${index}`).value,
+            date: document.getElementById(`date${index}`).value,
+            startTime: document.getElementById(`startTime${index}`).value,
+            endTime: document.getElementById(`endTime${index}`).value,
+            location: document.getElementById(`location${index}`).value
+          });
+        });
+        
+        generateICSFile(examData);
+      });
+      
+      // 生成ICS文件
+      function generateICSFile(examData) {
+        fetch('/generate-ics', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ examData })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('result').classList.remove('d-none');
+            document.getElementById('downloadLink').href = data.downloadUrl;
+            // 滚动到结果区域
+            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+          } else {
+            alert('生成失败：' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('发生错误，请查看控制台');
+        });
+      }
+      
+      // 工具函数：显示状态消息
+      function showStatus(elementId, message, type) {
+        const statusElement = document.getElementById(elementId);
+        statusElement.innerHTML = message;
+        statusElement.className = `alert alert-${type} mt-3`;
+        statusElement.classList.remove('d-none');
+      }
+      
+      // 显示手动输入卡片（备用）
+      document.getElementById('manualInputCard').classList.remove('d-none');
+    });
+  </script>
+</body>
+</html> 
