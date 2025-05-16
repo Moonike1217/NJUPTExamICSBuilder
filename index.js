@@ -202,23 +202,23 @@ app.post('/generate-ics', (req, res) => {
     return res.status(400).json({ error: '考试数据格式错误' });
   }
   
+  // 创建事件数组
   const events = examData.map(exam => {
     // 解析日期和时间
     const [year, month, day] = exam.date.split('-').map(Number);
     const [startHour, startMinute] = exam.startTime.split(':').map(Number);
     const [endHour, endMinute] = exam.endTime.split(':').map(Number);
     
+    // 返回事件对象
     return {
       title: `考试 ${exam.courseName}`,
       description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher}\n考试地点: ${exam.location}`,
       location: exam.location,
       start: [year, month, day, startHour, startMinute],
       end: [year, month, day, endHour, endMinute],
-      startInputType: 'local',
-      endInputType: 'local',
-      startOutputType: 'local',
-      endOutputType: 'local',
-      tzid: 'Asia/Shanghai',
+      busyStatus: 'BUSY',
+      productId: 'NJUPT-ExamCalendar/ICS',
+      calName: '南邮考试日历',
       categories: ['考试'],
       alarms: [
         {
@@ -230,18 +230,45 @@ app.post('/generate-ics', (req, res) => {
     };
   });
   
+  // 创建ICS文件
   createEvents(events, (error, value) => {
     if (error) {
       console.error(error);
       return res.status(500).json({ error: '生成ICS文件失败' });
     }
     
+    // 手动添加时区信息
+    // 在VCALENDAR开始后、第一个VEVENT前添加VTIMEZONE组件
+    const vtimezone = `VTIMEZONE
+TZID:Asia/Shanghai
+X-LIC-LOCATION:Asia/Shanghai
+BEGIN:STANDARD
+TZOFFSETFROM:+0800
+TZOFFSETTO:+0800
+TZNAME:CST
+DTSTART:19700101T000000
+END:STANDARD
+END:VTIMEZONE`;
+
+    // 检查生成的ICS内容
+    let icsContent = value;
+    
+    // 在第一个BEGIN:VEVENT前插入VTIMEZONE
+    icsContent = icsContent.replace(
+      'BEGIN:VEVENT',
+      `${vtimezone}\nBEGIN:VEVENT`
+    );
+    
+    // 为每个事件添加时区ID
+    icsContent = icsContent.replace(/DTSTART:/g, 'DTSTART;TZID=Asia/Shanghai:');
+    icsContent = icsContent.replace(/DTEND:/g, 'DTEND;TZID=Asia/Shanghai:');
+    
     // 设置响应头，让浏览器将响应作为文件下载
     res.setHeader('Content-Type', 'text/calendar');
     res.setHeader('Content-Disposition', 'attachment; filename=exams.ics');
     
-    // 直接将ICS内容发送到客户端
-    res.send(value);
+    // 直接将修改后的ICS内容发送到客户端
+    res.send(icsContent);
   });
 });
 
