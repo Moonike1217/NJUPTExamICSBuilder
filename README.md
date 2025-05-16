@@ -46,15 +46,39 @@ npm run dev
 - 必须以字母 B、Q 或 F 开头
 - 总长度必须为9位
 
+## Vercel 部署说明
+
+项目已经配置好可在 Vercel 上部署：
+
+1. 创建 Vercel 账户并安装 Vercel CLI
+   ```bash
+   npm i -g vercel
+   ```
+
+2. 登录 Vercel
+   ```bash
+   vercel login
+   ```
+
+3. 将项目部署到 Vercel
+   ```bash
+   vercel
+   ```
+   
+4. 确保 `public/excel/考试安排表.xlsx` 文件存在于项目中
+
+项目部署后，在 Vercel 环境中，Excel 文件会自动复制到适当位置以供服务器使用。
+
 ## 项目结构
 
 ```
 NJUPTExamICSBuilder/
 ├── public/                 # 静态文件
 │   ├── index.html          # 前端页面
-│   ├── uploads/            # 上传的Excel文件
-│   └── downloads/          # 生成的日历文件
+│   └── excel/              # Excel文件目录
+│       └── 考试安排表.xlsx  # 考试数据
 ├── index.js                # 服务器入口文件
+├── vercel.json             # Vercel部署配置
 ├── package.json            # 项目配置
 └── README.md               # 说明文档
 ```

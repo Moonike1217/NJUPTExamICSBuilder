@@ -13,7 +13,29 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 全局变量存储Excel文件路径
-const excelFilePath = path.join(__dirname, 'public', 'excel', '考试安排表.xlsx');
+const excelFilePath = process.env.VERCEL
+  ? path.join('/tmp', '考试安排表.xlsx')
+  : path.join(__dirname, 'public', 'excel', '考试安排表.xlsx');
+
+// 如果在Vercel环境中，将Excel文件从public目录复制到/tmp
+if (process.env.VERCEL) {
+  try {
+    const sourceExcelPath = path.join(__dirname, 'public', 'excel', '考试安排表.xlsx');
+    // 确保/tmp目录存在
+    if (!fs.existsSync('/tmp')) {
+      fs.mkdirSync('/tmp', { recursive: true });
+    }
+    // 复制文件
+    if (fs.existsSync(sourceExcelPath)) {
+      fs.copyFileSync(sourceExcelPath, excelFilePath);
+      console.log(`Excel文件已复制到: ${excelFilePath}`);
+    } else {
+      console.error(`源Excel文件不存在: ${sourceExcelPath}`);
+    }
+  } catch (error) {
+    console.error('复制Excel文件失败:', error);
+  }
+}
 
 // 根路由
 app.get('/', (req, res) => {
@@ -221,6 +243,8 @@ app.post('/generate-ics', (req, res) => {
 // 启动服务器
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
+  console.log(`当前环境: ${process.env.VERCEL ? 'Vercel' : '本地'}`);
+  console.log(`Excel文件路径: ${excelFilePath}`);
   
   // 检查Excel文件是否存在
   if (fs.existsSync(excelFilePath)) {
@@ -235,6 +259,6 @@ app.listen(PORT, () => {
     }
   } else {
     console.error(`错误: 考试安排表文件不存在: ${excelFilePath}`);
-    console.error('请确保 public/excel 目录中存在 考试安排表.xlsx 文件');
+    console.error('请确保Excel文件存在于正确路径');
   }
 }); 
