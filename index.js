@@ -53,7 +53,7 @@ app.post('/search-by-class-id', (req, res) => {
       for (const key in headerRow) {
         if (key.includes('班级')) headers.classColumn = key;
         if (key.includes('考试时间')) headers.examTimeColumn = key;
-        if (key.includes('考试教室')) headers.examRoomColumn = key;
+        if (key.includes('考试地点')) headers.examRoomColumn = key;
         if (key.includes('课程名称')) headers.courseNameColumn = key;
         if (key.includes('任课教师')) headers.teacherColumn = key;
       }
