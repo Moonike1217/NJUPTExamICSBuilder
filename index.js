@@ -214,6 +214,11 @@ app.post('/generate-ics', (req, res) => {
       location: exam.location,
       start: [year, month, day, startHour, startMinute],
       end: [year, month, day, endHour, endMinute],
+      startInputType: 'local',
+      endInputType: 'local',
+      startOutputType: 'local',
+      endOutputType: 'local',
+      tzid: 'Asia/Shanghai',
       categories: ['考试'],
       alarms: [
         {
