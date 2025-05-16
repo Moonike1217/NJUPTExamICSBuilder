@@ -64,6 +64,7 @@
     <div class="header">
       <h1>南邮考试日历生成器</h1>
       <p class="lead">将考试信息转换为 ICS 日历文件，方便导入到各种日历应用</p>
+      <div class="badge bg-success mb-2">已预加载截止2025.05.16教务处考试数据</div>
     </div>
 
     <div class="row mb-4">
@@ -71,8 +72,7 @@
         <div class="alert alert-info">
           <h5>使用说明：</h5>
           <ol>
-            <li>上传教务处考试安排Excel文件</li>
-            <li>输入学号查询您的考试信息</li>
+            <li>输入行政班ID查询您的考试信息</li>
             <li>点击"生成日历文件"按钮</li>
             <li>下载生成的 ICS 文件</li>
             <li>将 ICS 文件导入到您的日历应用（如 Google 日历、Apple 日历等）</li>
@@ -81,35 +81,17 @@
       </div>
     </div>
 
-    <!-- Excel文件上传区域 -->
+    <!-- 教学班ID查询区域 -->
     <div class="card mb-4">
       <div class="card-header bg-light">
-        <h5 class="mb-0">第一步：上传考试安排Excel文件</h5>
-      </div>
-      <div class="card-body">
-        <form id="uploadForm" enctype="multipart/form-data">
-          <div class="mb-3">
-            <label for="excelFile" class="form-label">选择Excel文件</label>
-            <input class="form-control" type="file" id="excelFile" name="excelFile" accept=".xlsx,.xls">
-            <div class="form-text">请上传教务处发布的考试安排Excel文件</div>
-          </div>
-          <button type="submit" class="btn btn-primary">上传文件</button>
-          <div id="uploadStatus" class="mt-3 d-none"></div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 学号查询区域 -->
-    <div class="card mb-4">
-      <div class="card-header bg-light">
-        <h5 class="mb-0">第二步：输入学号查询考试信息</h5>
+        <h5 class="mb-0">第一步：输入行政班ID查询考试信息</h5>
       </div>
       <div class="card-body">
         <form id="searchForm">
           <div class="mb-3">
-            <label for="studentId" class="form-label">学号</label>
-            <input type="text" class="form-control" id="studentId" name="studentId" placeholder="例如：B12345678" required>
-            <div class="form-text">请输入完整学号（B、Q或F开头，共9位）</div>
+            <label for="studentId" class="form-label">行政班ID</label>
+            <input type="text" class="form-control" id="studentId" name="studentId" required>
+            <div class="form-text">请输入完整行政班ID（如 B123456）</div>
           </div>
           <button type="submit" class="btn btn-primary">查询考试信息</button>
           <div id="searchStatus" class="mt-3 d-none"></div>
@@ -121,7 +103,7 @@
     <div id="examContainer" class="d-none">
       <div class="card mb-4">
         <div class="card-header bg-light">
-          <h5 class="mb-0">第三步：确认考试信息</h5>
+          <h5 class="mb-0">第二步：确认考试信息</h5>
         </div>
         <div class="card-body">
           <div class="table-responsive">
@@ -209,13 +191,12 @@
     <div id="result" class="d-none">
       <div class="alert alert-success">
         <h5>日历文件已生成！</h5>
-        <p>点击下方按钮下载 ICS 文件</p>
-        <a id="downloadLink" href="#" class="btn btn-success">下载日历文件</a>
+        <p>ICS 文件下载已开始，请查看浏览器下载区域</p>
       </div>
     </div>
 
     <div class="footer">
-      <p>© 2023 南邮考试日历生成器 | 基于 Express 和 ICS 技术构建</p>
+      <p>2025 南邮考试日历生成器 | 基于 Express 构建 | 代码全是 Cursor 写的我一行也没写</p>
     </div>
   </div>
 
@@ -224,59 +205,28 @@
       // 全局变量存储查询到的考试数据
       let currentExamData = [];
       
-      // Excel文件上传
-      document.getElementById('uploadForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const fileInput = document.getElementById('excelFile');
-        if (!fileInput.files.length) {
-          showStatus('uploadStatus', '请选择Excel文件', 'danger');
-          return;
-        }
-        
-        const formData = new FormData();
-        formData.append('excelFile', fileInput.files[0]);
-        
-        showStatus('uploadStatus', '正在上传文件...', 'info');
-        
-        fetch('/upload-excel', {
-          method: 'POST',
-          body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            showStatus('uploadStatus', '文件上传成功！请继续输入学号查询考试信息', 'success');
-          } else {
-            showStatus('uploadStatus', '文件上传失败：' + data.error, 'danger');
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          showStatus('uploadStatus', '上传出错，请重试', 'danger');
-        });
-      });
+      // 系统已预加载考试安排表，无需上传
       
-      // 学号查询
+      // 教学班ID查询
       document.getElementById('searchForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
-        const studentId = document.getElementById('studentId').value.trim();
-        const studentIdRegex = /^[BQF][0-9]{8}$/;
+        const classId = document.getElementById('studentId').value.trim();
+        const classIdRegex = /^[BQF][0-9]{6}$/;
         
-        if (!studentIdRegex.test(studentId)) {
-          showStatus('searchStatus', '学号格式不正确，必须是B、Q或F开头，总长度为9位', 'danger');
+        if (!classIdRegex.test(classId)) {
+          showStatus('searchStatus', '行政班ID格式不正确，请重新检查！', 'danger');
           return;
         }
         
         showStatus('searchStatus', '正在查询考试信息...', 'info');
         
-        fetch('/search-by-student-id', {
+        fetch('/search-by-class-id', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ studentId })
+          body: JSON.stringify({ classId })
         })
         .then(response => response.json())
         .then(data => {
@@ -287,7 +237,7 @@
             // 显示考试信息表格
             displayExamData(currentExamData);
             
-            showStatus('searchStatus', '查询成功！请确认考试信息', 'success');
+            showStatus('searchStatus', '查询成功！请确认您的考试信息', 'success');
           } else {
             showStatus('searchStatus', '查询失败：' + data.error, 'danger');
           }
@@ -468,28 +418,31 @@
       
       // 生成ICS文件
       function generateICSFile(examData) {
-        fetch('/generate-ics', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ examData })
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById('result').classList.remove('d-none');
-            document.getElementById('downloadLink').href = data.downloadUrl;
-            // 滚动到结果区域
-            document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
-          } else {
-            alert('生成失败：' + data.error);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('发生错误，请查看控制台');
-        });
+        // 创建一个表单
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/generate-ics';
+        form.target = '_blank'; // 在新窗口中打开，这样就会触发下载
+        form.style.display = 'none';
+        
+        // 添加考试数据作为隐藏字段
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'examData';
+        input.value = JSON.stringify(examData);
+        form.appendChild(input);
+        
+        // 添加表单到文档并提交
+        document.body.appendChild(form);
+        form.submit();
+        
+        // 从文档中移除表单
+        setTimeout(() => {
+          document.body.removeChild(form);
+          // 显示成功消息
+          document.getElementById('result').classList.remove('d-none');
+          document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
+        }, 1000);
       }
       
       // 工具函数：显示状态消息

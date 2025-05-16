@@ -4,79 +4,35 @@ const { createEvents } = require('ics');
 const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
-const multer = require('multer');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// 配置文件上传
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public', 'uploads'));
-  },
-  filename: (req, file, cb) => {
-    cb(null, 'exams-' + Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.includes('excel') || file.mimetype.includes('spreadsheetml')) {
-      cb(null, true);
-    } else {
-      cb(new Error('请上传Excel文件'), false);
-    }
-  }
-});
 
 // 中间件
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 全局变量存储上传的Excel文件路径
-let excelFilePath = '';
+// 全局变量存储Excel文件路径
+const excelFilePath = path.join(__dirname, 'public', 'excel', '考试安排表.xlsx');
 
 // 根路由
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 上传Excel文件
-app.post('/upload-excel', upload.single('excelFile'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: '请上传Excel文件' });
+// 根据教学班ID查询考试信息
+app.post('/search-by-class-id', (req, res) => {
+  const { classId } = req.body;
+  
+  // 验证行政班格式
+  const classIdRegex = /^[BQF][0-9]{6}$/;
+  if (!classIdRegex.test(classId)) {
+    return res.status(400).json({ error: '行政班ID格式不正确，请重新检查！' });
   }
   
-  excelFilePath = req.file.path;
-  
-  try {
-    // 尝试读取Excel文件以验证其有效性
-    const workbook = XLSX.readFile(excelFilePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    
-    res.json({ success: true, message: 'Excel文件上传成功' });
-  } catch (error) {
-    console.error('Excel文件读取失败:', error);
-    return res.status(400).json({ error: '无法读取Excel文件，请确保文件格式正确' });
-  }
-});
-
-// 根据学号查询考试信息
-app.post('/search-by-student-id', (req, res) => {
-  const { studentId } = req.body;
-  
-  // 验证学号格式
-  const studentIdRegex = /^[BQF][0-9]{8}$/;
-  if (!studentIdRegex.test(studentId)) {
-    return res.status(400).json({ error: '学号格式不正确，必须是B、Q或F开头，总长度为9位' });
-  }
-  
-  // 检查是否已上传Excel文件
-  if (!excelFilePath || !fs.existsSync(excelFilePath)) {
-    return res.status(400).json({ error: '请先上传Excel文件' });
+  // 检查Excel文件是否存在
+  if (!fs.existsSync(excelFilePath)) {
+    return res.status(400).json({ error: '考试安排表不存在，请联系管理员' });
   }
   
   try {
@@ -105,18 +61,18 @@ app.post('/search-by-student-id', (req, res) => {
     
     console.log('检测到的表头:', headers);
     
-    // 查找学号对应的班级
-    const studentClass = studentId.substring(0, 7); // 前7位表示班级
+    // 查找行政班ID对应的班级    
+    const classPrefix = classId;
     
-    // 过滤得到学生班级的考试信息
+    // 过滤得到行政班的考试信息
     const examData = rawData.filter(row => {
       // 尝试匹配班级列
       if (headers.classColumn && row[headers.classColumn]) {
-        return row[headers.classColumn].toString().includes(studentClass);
+        return row[headers.classColumn].toString().includes(classPrefix);
       }
       // 如果没有匹配到班级列，尝试匹配其他可能包含班级信息的列
       for (const key in row) {
-        if (typeof row[key] === 'string' && row[key].includes(studentClass)) {
+        if (typeof row[key] === 'string' && row[key].includes(classPrefix)) {
           return true;
         }
       }
@@ -124,29 +80,43 @@ app.post('/search-by-student-id', (req, res) => {
     });
     
     if (examData.length === 0) {
-      return res.status(404).json({ error: '未找到该学号对应的考试信息' });
+      return res.status(404).json({ error: '未找到该行政班ID对应的考试信息' });
     }
     
     // 转换为前端需要的格式
     const formattedExams = examData.map(exam => {
-      // 解析考试时间格式：第10周周3(2025-04-23) 13:30-15:20
+      // 解析考试时间格式，支持多种格式：
+      // 1. 第10周周3(2025-04-23) 13:30-15:20
+      // 2. 2025年05月10日 (10:25-12:15)
       const examTimeText = exam[headers.examTimeColumn] || '';
       let date = '';
       let startTime = '';
       let endTime = '';
       
       if (examTimeText) {
-        // 提取日期部分，匹配括号内的内容
-        const dateMatch = examTimeText.match(/\((\d{4}-\d{2}-\d{2})\)/);
+        // 尝试匹配格式1：提取括号内的日期(YYYY-MM-DD)
+        let dateMatch = examTimeText.match(/\((\d{4}-\d{2}-\d{2})\)/);
         if (dateMatch && dateMatch[1]) {
           date = dateMatch[1];
+        } else {
+          // 尝试匹配格式2：YYYY年MM月DD日
+          dateMatch = examTimeText.match(/(\d{4})年(\d{2})月(\d{2})日/);
+          if (dateMatch && dateMatch.length >= 4) {
+            date = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+          }
         }
         
         // 提取时间部分，匹配HH:MM-HH:MM格式
-        const timeMatch = examTimeText.match(/(\d{2}:\d{2})-(\d{2}:\d{2})/);
+        const timeMatch = examTimeText.match(/(\d{1,2}:\d{2})-(\d{1,2}:\d{2})/);
         if (timeMatch && timeMatch.length >= 3) {
-          startTime = timeMatch[1];
-          endTime = timeMatch[2];
+          // 确保时间格式为两位数的小时
+          startTime = timeMatch[1].includes(':') ? 
+            (timeMatch[1].length === 4 ? '0' + timeMatch[1] : timeMatch[1]) : 
+            timeMatch[1] + ':00';
+          
+          endTime = timeMatch[2].includes(':') ? 
+            (timeMatch[2].length === 4 ? '0' + timeMatch[2] : timeMatch[2]) : 
+            timeMatch[2] + ':00';
         }
       }
       
@@ -191,7 +161,20 @@ function formatExcelDate(excelDate) {
 
 // 接收考试数据并生成ICS文件
 app.post('/generate-ics', (req, res) => {
-  const { examData } = req.body;
+  // 从表单数据中解析考试信息
+  let examData;
+  
+  try {
+    // 尝试从请求体的examData字段获取数据
+    if (req.body.examData) {
+      examData = JSON.parse(req.body.examData);
+    } else {
+      examData = req.body.examData;
+    }
+  } catch (error) {
+    console.error('解析考试数据出错:', error);
+    return res.status(400).json({ error: '考试数据解析失败' });
+  }
   
   if (!examData || !Array.isArray(examData) || examData.length === 0) {
     return res.status(400).json({ error: '考试数据格式错误' });
@@ -226,21 +209,32 @@ app.post('/generate-ics', (req, res) => {
       return res.status(500).json({ error: '生成ICS文件失败' });
     }
     
-    const filePath = path.join(__dirname, 'public', 'downloads', 'exams.ics');
+    // 设置响应头，让浏览器将响应作为文件下载
+    res.setHeader('Content-Type', 'text/calendar');
+    res.setHeader('Content-Disposition', 'attachment; filename=exams.ics');
     
-    // 确保目录存在
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    
-    fs.writeFileSync(filePath, value);
-    
-    res.json({ success: true, downloadUrl: '/downloads/exams.ics' });
+    // 直接将ICS内容发送到客户端
+    res.send(value);
   });
 });
 
 // 启动服务器
 app.listen(PORT, () => {
   console.log(`服务器运行在 http://localhost:${PORT}`);
+  
+  // 检查Excel文件是否存在
+  if (fs.existsSync(excelFilePath)) {
+    console.log(`考试安排表已就绪: ${excelFilePath}`);
+    try {
+      // 尝试读取Excel文件以验证其有效性
+      const workbook = XLSX.readFile(excelFilePath);
+      const sheetName = workbook.SheetNames[0];
+      console.log(`Excel文件验证成功，工作表: ${sheetName}`);
+    } catch (error) {
+      console.error('Excel文件读取失败:', error);
+    }
+  } else {
+    console.error(`错误: 考试安排表文件不存在: ${excelFilePath}`);
+    console.error('请确保 public/excel 目录中存在 考试安排表.xlsx 文件');
+  }
 }); 
