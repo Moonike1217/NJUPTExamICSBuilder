@@ -10,9 +10,23 @@
     }
   ],
   "routes": [
+    { 
+      "src": "/generate-ics", 
+      "dest": "index.js",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    },
     { "src": "/search-by-class-id", "dest": "index.js" },
-    { "src": "/generate-ics", "dest": "index.js" },
-    { "src": "/(.*)", "dest": "index.js" }
+    { 
+      "src": "/(.*)", 
+      "dest": "index.js" 
+    }
   ],
   "env": {
     "NODE_ENV": "production"

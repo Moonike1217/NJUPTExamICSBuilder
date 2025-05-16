@@ -202,38 +202,44 @@ app.post('/generate-ics', (req, res) => {
     return res.status(400).json({ error: '考试数据格式错误' });
   }
   
-  // 创建事件数组
+  // 检测用户代理，判断是否为移动设备
+  const userAgent = req.headers['user-agent'] || '';
+  const isMobile = /mobile/i.test(userAgent);
+  const isSafari = /safari/i.test(userAgent) && !/chrome/i.test(userAgent);
+  const isIOS = /iPad|iPhone|iPod/i.test(userAgent);
+  
+  console.log(`用户设备检测: Mobile=${isMobile}, Safari=${isSafari}, iOS=${isIOS}`);
+  
   const events = examData.map(exam => {
     // 解析日期和时间
     const [year, month, day] = exam.date.split('-').map(Number);
     const [startHour, startMinute] = exam.startTime.split(':').map(Number);
     const [endHour, endMinute] = exam.endTime.split(':').map(Number);
     
-    // 返回事件对象
     return {
       title: `考试 ${exam.courseName}`,
-      description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher}\n考试地点: ${exam.location}`,
-      location: exam.location,
+      description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher || '未知'}\n考试地点: ${exam.location || '未知'}`,
+      location: exam.location || '未知地点',
       start: [year, month, day, startHour, startMinute],
       end: [year, month, day, endHour, endMinute],
       busyStatus: 'BUSY',
       productId: 'NJUPT-ExamCalendar/ICS',
       calName: '南邮考试日历',
       categories: ['考试'],
+      // 确保有效的闹钟设置
       alarms: [
         {
-          action: 'display',
-          description: `${exam.courseName}考试将在60分钟后开始，考试地点：${exam.location}`,
+          action: 'DISPLAY',
+          description: `${exam.courseName}考试将在60分钟后开始，考试地点：${exam.location || '未知地点'}`,
           trigger: { minutes: 60, before: true }
         }
       ]
     };
   });
   
-  // 创建ICS文件
   createEvents(events, (error, value) => {
     if (error) {
-      console.error(error);
+      console.error('生成ICS错误:', error);
       return res.status(500).json({ error: '生成ICS文件失败' });
     }
     
@@ -263,11 +269,63 @@ END:VTIMEZONE`;
     icsContent = icsContent.replace(/DTSTART:/g, 'DTSTART;TZID=Asia/Shanghai:');
     icsContent = icsContent.replace(/DTEND:/g, 'DTEND;TZID=Asia/Shanghai:');
     
-    // 设置响应头，让浏览器将响应作为文件下载
-    res.setHeader('Content-Type', 'text/calendar');
-    res.setHeader('Content-Disposition', 'attachment; filename=exams.ics');
+    // 修复潜在的ICS格式问题
+    // 确保每行不超过75个字符
+    icsContent = icsContent.split('\n').map(line => {
+      if (line.length > 75) {
+        // 拆分长行，确保遵循RFC 5545规范
+        const chunks = [];
+        for (let i = 0; i < line.length; i += 74) {
+          if (i === 0) {
+            chunks.push(line.substring(i, i + 74));
+          } else {
+            chunks.push(' ' + line.substring(i, i + 74));
+          }
+        }
+        return chunks.join('\n');
+      }
+      return line;
+    }).join('\n');
     
-    // 直接将修改后的ICS内容发送到客户端
+    // 针对iOS设备优化
+    if (isIOS) {
+      // 确保按iOS日历需要的方式设置PRODID
+      icsContent = icsContent.replace(
+        /PRODID:.+/,
+        'PRODID:-//南邮考试日历//ICS Calendar 1.0//CN'
+      );
+      
+      // 确保事件有UID
+      if (!icsContent.includes('UID:')) {
+        const uids = events.map(() => `UID:${Date.now()}-${Math.random().toString(36).substring(2, 10)}@njupt.edu.cn`);
+        icsContent = icsContent.replace(
+          /BEGIN:VEVENT/g, 
+          (match, index) => `BEGIN:VEVENT\n${uids[Math.min(index, uids.length - 1)]}`
+        );
+      }
+    }
+    
+    console.log('ICS文件生成完成，大小:', Buffer.byteLength(icsContent, 'utf8'), '字节');
+    
+    // 设置响应头
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    
+    // 根据设备类型设置不同的Content-Disposition
+    if (isMobile && isSafari) {
+      // 移动设备Safari不使用附件模式，直接呈现内容以便用户添加到日历
+      res.setHeader('Content-Disposition', 'inline; filename="exams.ics"');
+    } else {
+      // 其他浏览器使用附件模式下载
+      res.setHeader('Content-Disposition', 'attachment; filename="exams.ics"');
+    }
+    
+    // 添加其他必要的响应头
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Content-Length', Buffer.byteLength(icsContent, 'utf8'));
+    
+    // 发送ICS内容
     res.send(icsContent);
   });
 });

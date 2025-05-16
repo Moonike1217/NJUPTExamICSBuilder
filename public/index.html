@@ -652,34 +652,69 @@
       
       // 生成ICS文件
       async function generateICSFile(examData) {
-        // 创建一个表单
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/generate-ics';
-        form.target = '_blank'; // 在新窗口中打开，这样就会触发下载
-        form.style.display = 'none';
-        
-        // 添加考试数据作为隐藏字段
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'examData';
-        input.value = JSON.stringify(examData);
-        form.appendChild(input);
-        
-        // 添加表单到文档并提交
-        document.body.appendChild(form);
-        form.submit();
-        
-        // 从文档中移除表单
-        return new Promise(resolve => {
-          setTimeout(() => {
-            document.body.removeChild(form);
+        try {
+          // 检测是否为Safari浏览器
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+          console.log(`浏览器检测: Safari=${isSafari}, iOS=${isIOS}`);
+          
+          // 显示加载状态
+          showStatus('searchStatus', '<i class="fas fa-spinner fa-spin me-2"></i>正在生成日历文件...', 'info');
+          
+          // 使用fetch API代替表单提交
+          const response = await fetch('/generate-ics', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ examData }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`服务器响应错误: ${response.status}`);
+          }
+          
+          // 获取响应数据
+          const blob = await response.blob();
+          
+          // 使用Blob URL处理文件下载
+          const url = window.URL.createObjectURL(blob);
+          
+          if (isIOS) {
+            // iOS Safari特殊处理：打开新窗口
+            window.location.href = url;
+            
+            // 显示成功消息和特殊提示
+            showStatus('searchStatus', '<i class="fas fa-check-circle me-2"></i>文件已准备好，请在新窗口中选择"添加到日历"', 'success');
+          } else {
+            // 非iOS设备：创建下载链接并模拟点击
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'exams.ics';
+            link.style.display = 'none';
+            
+            // 添加到DOM并触发点击
+            document.body.appendChild(link);
+            link.click();
+            
+            // 清理
+            setTimeout(() => {
+              document.body.removeChild(link);
+              window.URL.revokeObjectURL(url);
+            }, 100);
+            
             // 显示成功消息
             document.getElementById('result').classList.remove('d-none');
             document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
-            resolve();
-          }, 1000);
-        });
+            document.getElementById('searchStatus').classList.add('d-none');
+          }
+          
+          return true;
+        } catch (error) {
+          console.error('生成ICS文件出错:', error);
+          showStatus('searchStatus', '<i class="fas fa-exclamation-circle me-2"></i>生成文件时出错: ' + error.message, 'danger');
+          return false;
+        }
       }
       
       // 工具函数：显示状态消息
