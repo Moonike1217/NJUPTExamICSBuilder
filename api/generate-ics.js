@@ -1,12 +1,4 @@
 const { createEvents } = require('ics');
-const dayjs = require('dayjs');
-const utc = require('dayjs/plugin/utc');
-const timezone = require('dayjs/plugin/timezone');
-
-// 配置dayjs
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.tz.setDefault('Asia/Shanghai');
 
 module.exports = async (req, res) => {
   // 设置CORS
@@ -44,28 +36,17 @@ module.exports = async (req, res) => {
   
   try {
     const events = examData.map(exam => {
-      // 使用dayjs处理时区
-      const startTime = dayjs.tz(`${exam.date} ${exam.startTime}`, 'Asia/Shanghai');
-      const endTime = dayjs.tz(`${exam.date} ${exam.endTime}`, 'Asia/Shanghai');
+      // 直接使用Excel中的时间，按原格式解析
+      const [year, month, day] = exam.date.split('-').map(Number);
+      const [startHour, startMinute] = exam.startTime.split(':').map(Number);
+      const [endHour, endMinute] = exam.endTime.split(':').map(Number);
       
       return {
         title: `考试 ${exam.courseName}`,
         description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher}\n考试地点: ${exam.location}`,
         location: exam.location,
-        start: [
-          startTime.year(),
-          startTime.month() + 1, // dayjs的月份是0-11，需要+1
-          startTime.date(),
-          startTime.hour(),
-          startTime.minute()
-        ],
-        end: [
-          endTime.year(),
-          endTime.month() + 1,
-          endTime.date(),
-          endTime.hour(),
-          endTime.minute()
-        ],
+        start: [year, month, day, startHour, startMinute],
+        end: [year, month, day, endHour, endMinute],
         categories: ['考试'],
         alarms: [
           {
