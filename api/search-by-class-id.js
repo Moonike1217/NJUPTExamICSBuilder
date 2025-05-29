@@ -54,6 +54,7 @@ module.exports = async (req, res) => {
         if (key.includes('考试地点')) headers.examRoomColumn = key;
         if (key.includes('课程名称')) headers.courseNameColumn = key;
         if (key.includes('任课教师')) headers.teacherColumn = key;
+        if (key.includes('人数')) headers.studentCountColumn = key;
       }
     }
     
@@ -124,7 +125,8 @@ module.exports = async (req, res) => {
         date: date,
         startTime: startTime,
         endTime: endTime,
-        location: exam[headers.examRoomColumn] || ''
+        location: exam[headers.examRoomColumn] || '',
+        studentCount: exam[headers.studentCountColumn] || ''
       };
     });
     

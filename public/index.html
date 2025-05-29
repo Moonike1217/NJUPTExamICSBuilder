@@ -309,6 +309,7 @@
                       </div>
                     </th>
                     <th>课程名称</th>
+                    <th>人数</th>
                     <th>任课教师</th>
                     <th>日期</th>
                     <th>开始时间</th>
@@ -464,6 +465,7 @@
               </div>
             </td>
             <td>${exam.courseName}</td>
+            <td>${exam.studentCount || '<span class="text-muted">-</span>'}</td>
             <td>${exam.teacher || '<span class="text-muted">-</span>'}</td>
             <td>${formatDate(exam.date)}</td>
             <td>${exam.startTime}</td>
