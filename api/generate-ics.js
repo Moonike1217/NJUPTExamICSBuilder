@@ -1,4 +1,12 @@
 const { createEvents } = require('ics');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+// 配置dayjs
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('Asia/Shanghai');
 
 module.exports = async (req, res) => {
   // 设置CORS

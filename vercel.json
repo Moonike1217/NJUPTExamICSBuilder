@@ -27,8 +27,5 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ],
-  "env": {
-    "TZ": "Asia/Shanghai"
-  }
+  ]
 } 
