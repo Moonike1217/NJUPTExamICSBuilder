@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
   const { classId } = req.body;
   
   // 验证行政班格式
-  const classIdRegex = /^[BQF][0-9]{6}$/;
+  const classIdRegex = /^[BQFP][0-9]{6}$/;
   if (!classIdRegex.test(classId)) {
     return res.status(400).json({ error: '行政班ID格式不正确，请重新检查！' });
   }
