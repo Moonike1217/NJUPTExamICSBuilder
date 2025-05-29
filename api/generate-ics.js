@@ -44,17 +44,28 @@ module.exports = async (req, res) => {
   
   try {
     const events = examData.map(exam => {
-      // 解析日期和时间
-      const [year, month, day] = exam.date.split('-').map(Number);
-      const [startHour, startMinute] = exam.startTime.split(':').map(Number);
-      const [endHour, endMinute] = exam.endTime.split(':').map(Number);
+      // 使用dayjs处理时区
+      const startTime = dayjs.tz(`${exam.date} ${exam.startTime}`, 'Asia/Shanghai');
+      const endTime = dayjs.tz(`${exam.date} ${exam.endTime}`, 'Asia/Shanghai');
       
       return {
         title: `考试 ${exam.courseName}`,
         description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher}\n考试地点: ${exam.location}`,
         location: exam.location,
-        start: [year, month, day, startHour, startMinute],
-        end: [year, month, day, endHour, endMinute],
+        start: [
+          startTime.year(),
+          startTime.month() + 1, // dayjs的月份是0-11，需要+1
+          startTime.date(),
+          startTime.hour(),
+          startTime.minute()
+        ],
+        end: [
+          endTime.year(),
+          endTime.month() + 1,
+          endTime.date(),
+          endTime.hour(),
+          endTime.minute()
+        ],
         categories: ['考试'],
         alarms: [
           {
