@@ -2,11 +2,12 @@
   "name": "njuptexamicsbuilder",
   "version": "1.0.0",
   "description": "NJUPT考试日历生成器",
-  "main": "index.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node api/index.js",
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel deploy --prod"
   },
   "keywords": [
     "njupt",
