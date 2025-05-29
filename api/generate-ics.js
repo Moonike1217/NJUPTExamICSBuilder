@@ -36,17 +36,32 @@ module.exports = async (req, res) => {
   
   try {
     const events = examData.map(exam => {
-      // 直接使用Excel中的时间，按原格式解析
+      // 解析日期和时间
       const [year, month, day] = exam.date.split('-').map(Number);
       const [startHour, startMinute] = exam.startTime.split(':').map(Number);
       const [endHour, endMinute] = exam.endTime.split(':').map(Number);
+      
+      // 处理跨日的情况
+      let startHourUTC = startHour - 8;
+      let startDay = day;
+      if (startHourUTC < 0) {
+        startHourUTC += 24;
+        startDay -= 1;
+      }
+
+      let endHourUTC = endHour - 8;
+      let endDay = day;
+      if (endHourUTC < 0) {
+        endHourUTC += 24;
+        endDay -= 1;
+      }
       
       return {
         title: `考试 ${exam.courseName}`,
         description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher}\n考试地点: ${exam.location}`,
         location: exam.location,
-        start: [year, month, day, startHour, startMinute],
-        end: [year, month, day, endHour, endMinute],
+        start: [year, month, startDay, startHourUTC, startMinute],
+        end: [year, month, endDay, endHourUTC, endMinute],
         categories: ['考试'],
         alarms: [
           {
