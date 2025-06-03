@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: '只支持POST请求' });
   }
 
-  const { classId } = req.body;
+  const { classId, examData } = req.body;
   
   // 验证行政班格式
   const classIdRegex = /^[BQFP][0-9]{6}$/;
@@ -28,14 +28,23 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: '行政班ID格式不正确，请重新检查！' });
   }
   
-  // 检查Excel文件是否存在
-  if (!fs.existsSync(excelFilePath)) {
-    return res.status(400).json({ error: '考试安排表不存在，请联系管理员' });
-  }
-  
   try {
-    // 读取Excel文件
-    const workbook = XLSX.readFile(excelFilePath);
+    let workbook;
+    
+    // 检查是否有微信小程序传来的文件数据
+    if (examData && examData.fileData) {
+      // 处理Base64文件数据（微信小程序）
+      const buffer = Buffer.from(examData.fileData, 'base64');
+      workbook = XLSX.read(buffer, { type: 'buffer' });
+    } else {
+      // 检查本地Excel文件是否存在（Web版本）
+      if (!fs.existsSync(excelFilePath)) {
+        return res.status(400).json({ error: '考试安排表不存在，请上传Excel文件或联系管理员' });
+      }
+      // 读取本地Excel文件
+      workbook = XLSX.readFile(excelFilePath);
+    }
+    
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     
@@ -64,7 +73,7 @@ module.exports = async (req, res) => {
     const classPrefix = classId;
     
     // 过滤得到行政班的考试信息
-    const examData = rawData.filter(row => {
+    const examDataFiltered = rawData.filter(row => {
       // 尝试匹配班级列
       if (headers.classColumn && row[headers.classColumn]) {
         return row[headers.classColumn].toString().includes(classPrefix);
@@ -78,12 +87,16 @@ module.exports = async (req, res) => {
       return false;
     });
     
-    if (examData.length === 0) {
-      return res.status(404).json({ error: '未找到该行政班ID对应的考试信息' });
+    if (examDataFiltered.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: '未找到该行政班ID对应的考试信息',
+        error: '未找到该行政班ID对应的考试信息' 
+      });
     }
     
     // 转换为前端需要的格式
-    const formattedExams = examData.map(exam => {
+    const formattedExams = examDataFiltered.map(exam => {
       // 解析考试时间格式，支持多种格式：
       // 1. 第10周周3(2025-04-23) 13:30-15:20
       // 2. 2025年05月10日 (10:25-12:15)
@@ -120,19 +133,30 @@ module.exports = async (req, res) => {
       }
       
       return {
-        courseName: exam[headers.courseNameColumn] || '',
+        course: exam[headers.courseNameColumn] || '',
+        courseName: exam[headers.courseNameColumn] || '', // 保持兼容性
         teacher: exam[headers.teacherColumn] || '',
         date: date,
+        time: date && startTime && endTime ? `${date} ${startTime}-${endTime}` : examTimeText,
         startTime: startTime,
         endTime: endTime,
         location: exam[headers.examRoomColumn] || '',
-        studentCount: exam[headers.studentCountColumn] || ''
+        studentCount: exam[headers.studentCountColumn] || '',
+        classId: classId
       };
     });
     
-    res.json({ success: true, examData: formattedExams });
+    res.json({ 
+      success: true, 
+      data: formattedExams,
+      examData: formattedExams // 保持兼容性
+    });
   } catch (error) {
     console.error('查询考试信息失败:', error);
-    return res.status(500).json({ error: '查询考试信息失败，请重试' });
+    return res.status(500).json({ 
+      success: false,
+      message: '查询考试信息失败，请重试',
+      error: '查询考试信息失败，请重试' 
+    });
   }
 }; 

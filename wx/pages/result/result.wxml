@@ -1,0 +1,103 @@
+<view class="container">
+  <!-- 头部信息 -->
+  <view class="card">
+    <view class="result-header">
+      <text class="result-title">考试安排</text>
+      <view class="result-info">
+        <text class="info-item">学号：{{classId}}</text>
+        <text class="info-item">共{{examData.length}}场考试</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 考试列表 -->
+  <view class="exam-list" wx:if="{{examData.length > 0}}">
+    <view 
+      class="exam-card" 
+      wx:for="{{examData}}" 
+      wx:key="index"
+    >
+      <view class="exam-header">
+        <text class="course-name">{{item.course || item['课程名称'] || '未知课程'}}</text>
+        <view class="exam-status {{item.status || 'normal'}}">
+          {{item.statusText || '正常'}}
+        </view>
+      </view>
+      
+      <view class="exam-details">
+        <view class="detail-row">
+          <text class="detail-icon">🕐</text>
+          <text class="detail-text">{{item.time || item['考试时间'] || '时间待定'}}</text>
+        </view>
+        
+        <view class="detail-row">
+          <text class="detail-icon">📍</text>
+          <text class="detail-text">{{item.location || item['考试地点'] || '地点待定'}}</text>
+        </view>
+        
+        <view class="detail-row" wx:if="{{item.teacher || item['监考老师']}}">
+          <text class="detail-icon">👨‍🏫</text>
+          <text class="detail-text">{{item.teacher || item['监考老师']}}</text>
+        </view>
+        
+        <view class="detail-row" wx:if="{{item.seatNumber || item['座位号']}}">
+          <text class="detail-icon">💺</text>
+          <text class="detail-text">座位号：{{item.seatNumber || item['座位号']}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{examData.length === 0 && !loading}}">
+    <text class="empty-icon">📝</text>
+    <text class="empty-title">未找到考试信息</text>
+    <text class="empty-desc">请检查学号是否正确，或联系教务处确认考试安排</text>
+    <button class="btn-secondary" bindtap="goBack">重新查询</button>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>正在加载考试信息...</text>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons" wx:if="{{examData.length > 0}}">
+    <button 
+      class="btn-primary" 
+      bindtap="generateCalendar"
+      loading="{{generating}}"
+      disabled="{{generating}}"
+    >
+      {{generating ? '生成中...' : '生成日历文件'}}
+    </button>
+    
+    <button class="btn-secondary" bindtap="shareResult">
+      分享考试安排
+    </button>
+  </view>
+
+  <!-- 提示信息 -->
+  <view class="card" wx:if="{{examData.length > 0}}">
+    <text class="section-title">使用提示</text>
+    <view class="tips">
+      <view class="tip-item">
+        <text class="tip-icon">💡</text>
+        <text class="tip-text">生成的ICS文件可以导入到手机日历、Google日历、Outlook等应用</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">⏰</text>
+        <text class="tip-text">建议提前15-30分钟到达考场</text>
+      </view>
+      <view class="tip-item">
+        <text class="tip-icon">📚</text>
+        <text class="tip-text">记得携带学生证和准考证</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 错误信息 -->
+  <view class="error-message" wx:if="{{errorMessage}}">
+    {{errorMessage}}
+  </view>
+</view> 
