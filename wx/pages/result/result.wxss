@@ -1,166 +1,114 @@
-.result-header {
+.container {
+  padding: 30rpx;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.result {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx;
+}
+
+.header {
+  margin-bottom: 30rpx;
   text-align: center;
 }
 
-.result-title {
-  display: block;
+.title {
   font-size: 36rpx;
   font-weight: bold;
-  color: #1976d2;
-  margin-bottom: 15rpx;
+  color: #333;
 }
 
-.result-info {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 20rpx;
-}
-
-.info-item {
-  font-size: 28rpx;
+.subtitle {
+  font-size: 24rpx;
   color: #666;
-  background: #f8f9fa;
-  padding: 10rpx 20rpx;
-  border-radius: 20rpx;
+  margin-left: 10rpx;
 }
 
 .exam-list {
-  margin: 20rpx 0;
+  margin-bottom: 30rpx;
 }
 
-.exam-card {
-  background: white;
-  border-radius: 12rpx;
+.exam-item {
+  display: flex;
+  padding: 20rpx;
+  background: #f8f8f8;
+  border-radius: 8rpx;
   margin-bottom: 20rpx;
-  padding: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-  border-left: 6rpx solid #1976d2;
+}
+
+.exam-checkbox {
+  padding-right: 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.exam-content {
+  flex: 1;
 }
 
 .exam-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1px solid #eee;
 }
 
 .course-name {
   font-size: 32rpx;
   font-weight: bold;
   color: #333;
-  flex: 1;
 }
 
-.exam-status {
-  padding: 8rpx 16rpx;
-  border-radius: 16rpx;
+.student-count {
   font-size: 24rpx;
-  font-weight: bold;
-}
-
-.exam-status.normal {
-  background: #e8f5e8;
-  color: #4caf50;
-}
-
-.exam-status.urgent {
-  background: #ffebee;
-  color: #f44336;
-}
-
-.exam-status.warning {
-  background: #fff3e0;
-  color: #ff9800;
-}
-
-.exam-details {
-  margin-top: 20rpx;
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15rpx;
-}
-
-.detail-icon {
-  width: 40rpx;
-  font-size: 32rpx;
-  margin-right: 15rpx;
-  text-align: center;
-}
-
-.detail-text {
-  font-size: 28rpx;
   color: #666;
-  flex: 1;
+  background: #e8e8e8;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 100rpx 40rpx;
-}
-
-.empty-icon {
-  font-size: 120rpx;
-  display: block;
-  margin-bottom: 30rpx;
-}
-
-.empty-title {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #333;
-  display: block;
-  margin-bottom: 15rpx;
-}
-
-.empty-desc {
+.exam-detail {
   font-size: 28rpx;
-  color: #999;
-  line-height: 1.5;
-  display: block;
-  margin-bottom: 40rpx;
 }
 
-.action-buttons {
-  margin: 40rpx 0;
+.detail-item {
   display: flex;
-  flex-direction: column;
-  gap: 20rpx;
+  margin-bottom: 12rpx;
+  line-height: 1.6;
 }
 
-.tips {
-  margin-top: 20rpx;
+.detail-item:last-child {
+  margin-bottom: 0;
 }
 
-.tip-item {
-  display: flex;
-  align-items: flex-start;
-  margin-bottom: 20rpx;
-  padding: 20rpx;
-  background: #f8f9fa;
-  border-radius: 8rpx;
-}
-
-.tip-icon {
-  width: 40rpx;
-  font-size: 32rpx;
-  margin-right: 15rpx;
-  text-align: center;
+.label {
+  color: #666;
+  width: 100rpx;
   flex-shrink: 0;
 }
 
-.tip-text {
+.no-data {
+  text-align: center;
+  color: #999;
   font-size: 28rpx;
-  color: #666;
-  line-height: 1.4;
+  padding: 40rpx 0;
 }
 
-.section-title {
-  display: block;
+.footer {
+  margin-top: 40rpx;
+  padding-top: 30rpx;
+  border-top: 1px solid #eee;
+}
+
+.generate-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
   font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20rpx;
+  border-radius: 44rpx;
 } 

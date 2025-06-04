@@ -1,124 +1,72 @@
-const util = require('../../utils/util.js')
 const app = getApp()
 
 Page({
   data: {
     classId: '',
-    isClassIdValid: false,
-    recentExams: []
+    isLoading: false
   },
 
-  onLoad(options) {
-    console.log('首页加载')
-    this.loadRecentExams()
-    
-    // 如果有传入的学号，自动填充
-    if (options.classId) {
-      this.setData({
-        classId: options.classId
+  // 输入框内容变化时触发
+  onInput(e) {
+    this.setData({
+      classId: e.detail.value
+    })
+  },
+
+  // 提交表单
+  onSubmit() {
+    const classId = this.data.classId
+    if (!classId || classId.length !== 7) {
+      wx.showToast({
+        title: '请输入7位行政班号',
+        icon: 'none'
       })
-      this.validateClassId(options.classId)
-    }
-  },
-
-  onShow() {
-    // 刷新历史记录
-    this.loadRecentExams()
-  },
-
-  /**
-   * 学号输入处理
-   */
-  onClassIdInput(e) {
-    const classId = e.detail.value.toUpperCase()
-    this.setData({
-      classId: classId
-    })
-    this.validateClassId(classId)
-  },
-
-  /**
-   * 验证学号
-   */
-  validateClassId(classId) {
-    const isValid = util.validateClassId(classId)
-    this.setData({
-      isClassIdValid: isValid
-    })
-    
-    if (isValid) {
-      app.globalData.classId = classId
-    }
-  },
-
-  /**
-   * 跳转到上传页面
-   */
-  goToUpload() {
-    if (!this.data.isClassIdValid) {
-      util.showError('请输入正确的学号格式')
       return
     }
 
-    wx.navigateTo({
-      url: `/pages/upload/upload?classId=${this.data.classId}`
-    })
-  },
+    this.setData({ isLoading: true })
 
-  /**
-   * 加载历史记录
-   */
-  loadRecentExams() {
-    const recentExams = util.getStorage('recentExams') || []
-    this.setData({
-      recentExams: recentExams.slice(0, 5) // 只显示最近5条
-    })
-  },
-
-  /**
-   * 使用历史记录项
-   */
-  useHistoryItem(e) {
-    const index = e.currentTarget.dataset.index
-    const historyItem = this.data.recentExams[index]
-    
-    if (historyItem) {
-      this.setData({
-        classId: historyItem.classId
-      })
-      this.validateClassId(historyItem.classId)
-      
-      // 如果有缓存的考试数据，直接跳转到结果页
-      if (historyItem.examData) {
-        app.globalData.examData = historyItem.examData
-        wx.navigateTo({
-          url: `/pages/result/result?classId=${historyItem.classId}&fromHistory=true`
+    wx.request({
+      url: `${app.globalData.apiBaseUrl}/search-by-class-id`,
+      method: 'POST',
+      data: {
+        classId: classId
+      },
+      header: {
+        'content-type': 'application/json'
+      },
+      success: (res) => {
+        console.log('API返回数据：', res.data)
+        if (res.statusCode === 200 && res.data.success) {
+          // 只存储examData字段
+          const examData = res.data.examData
+          console.log('考试数据：', examData)
+          
+          // 将结果数据存入全局
+          app.globalData.examData = examData
+          console.log('存入全局数据：', app.globalData.examData)
+          
+          // 跳转到结果页
+          wx.navigateTo({
+            url: '/pages/result/result'
+          })
+        } else {
+          wx.showToast({
+            title: '获取数据失败',
+            icon: 'none'
+          })
+        }
+      },
+      fail: (err) => {
+        console.error('请求失败：', err)
+        wx.showToast({
+          title: '网络请求失败',
+          icon: 'none'
         })
-      } else {
-        // 否则跳转到上传页
-        this.goToUpload()
+      },
+      complete: () => {
+        this.setData({ isLoading: false })
       }
-    }
-  },
-
-  /**
-   * 分享功能
-   */
-  onShareAppMessage() {
-    return {
-      title: '南邮考试日历生成器',
-      desc: '快速将考试信息转换为日历文件',
-      path: '/pages/index/index'
-    }
-  },
-
-  /**
-   * 分享到朋友圈
-   */
-  onShareTimeline() {
-    return {
-      title: '南邮考试日历生成器 - 考试安排一目了然',
-      query: ''
-    }
+    })
   }
 }) 

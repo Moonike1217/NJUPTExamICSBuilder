@@ -1,125 +1,30 @@
-.logo {
-  width: 120rpx;
-  height: 120rpx;
-  margin-bottom: 20rpx;
-}
-
-.title {
-  display: block;
-  font-size: 40rpx;
-  font-weight: bold;
-  color: #1976d2;
-  margin-bottom: 10rpx;
-}
-
-.subtitle {
-  display: block;
-  font-size: 28rpx;
-  color: #666;
-  line-height: 1.5;
-}
-
-.section-title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 20rpx;
-}
-
-.step-list {
-  margin-top: 20rpx;
-}
-
-.step-item {
+.container {
+  height: 100vh;
   display: flex;
-  align-items: center;
-  margin-bottom: 20rpx;
-  padding: 20rpx;
-  background: #f8f9fa;
-  border-radius: 8rpx;
-}
-
-.step-number {
-  width: 60rpx;
-  height: 60rpx;
-  background: #1976d2;
-  color: white;
-  border-radius: 50%;
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 24rpx;
-  font-weight: bold;
-  margin-right: 20rpx;
-  flex-shrink: 0;
+  padding: 0 30rpx;
 }
 
-.step-text {
-  font-size: 28rpx;
-  color: #333;
-  line-height: 1.4;
+.form {
+  width: 100%;
+  max-width: 600rpx;
 }
 
-.exam-history {
-  margin-top: 20rpx;
-}
-
-.history-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20rpx;
-  background: #f8f9fa;
+.input {
+  width: 100%;
+  height: 88rpx;
+  background: #F5F5F5;
   border-radius: 8rpx;
-  margin-bottom: 15rpx;
-  border-left: 4rpx solid #1976d2;
-}
-
-.history-item:active {
-  background: #e3f2fd;
-}
-
-.history-classid {
+  padding: 0 24rpx;
+  margin-bottom: 32rpx;
   font-size: 32rpx;
-  font-weight: bold;
-  color: #1976d2;
 }
 
-.history-time {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.history-count {
-  font-size: 28rpx;
-  color: #666;
-}
-
-.format-list {
-  margin-top: 20rpx;
-}
-
-.format-item {
-  display: flex;
-  align-items: center;
-  padding: 20rpx;
-  background: #f8f9fa;
-  border-radius: 8rpx;
-  margin-bottom: 15rpx;
-}
-
-.format-icon {
-  font-size: 40rpx;
-  margin-right: 20rpx;
-}
-
-.format-text {
-  font-size: 28rpx;
-  color: #333;
-}
-
-.btn-primary[disabled] {
-  background-color: #ccc !important;
-  color: #999 !important;
+.submit-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  font-size: 32rpx;
 } 
