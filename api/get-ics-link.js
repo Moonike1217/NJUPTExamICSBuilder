@@ -1,0 +1,108 @@
+const { createEvents } = require('ics');
+const crypto = require('crypto');
+
+// 生成唯一的文件ID
+function generateFileId() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+module.exports = async (req, res) => {
+  // 设置CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: '只支持POST请求' });
+  }
+
+  // 从表单数据中解析考试信息
+  let examData;
+  
+  try {
+    // 尝试从请求体的examData字段获取数据
+    if (typeof req.body.examData === 'string') {
+      examData = JSON.parse(req.body.examData);
+    } else {
+      examData = req.body.examData;
+    }
+  } catch (error) {
+    console.error('解析考试数据出错:', error);
+    return res.status(400).json({ error: '考试数据解析失败' });
+  }
+  
+  if (!examData || !Array.isArray(examData) || examData.length === 0) {
+    return res.status(400).json({ error: '考试数据格式错误' });
+  }
+  
+  try {
+    const events = examData.map(exam => {
+      // 解析日期和时间
+      const [year, month, day] = exam.date.split('-').map(Number);
+      const [startHour, startMinute] = exam.startTime.split(':').map(Number);
+      const [endHour, endMinute] = exam.endTime.split(':').map(Number);
+      
+      // 处理跨日的情况
+      let startHourUTC = startHour - 8;
+      let startDay = day;
+      if (startHourUTC < 0) {
+        startHourUTC += 24;
+        startDay -= 1;
+      }
+
+      let endHourUTC = endHour - 8;
+      let endDay = day;
+      if (endHourUTC < 0) {
+        endHourUTC += 24;
+        endDay -= 1;
+      }
+      
+      return {
+        title: `考试 ${exam.courseName}`,
+        description: `课程: ${exam.courseName}\n任课教师: ${exam.teacher}\n考试地点: ${exam.location}`,
+        location: exam.location,
+        start: [year, month, startDay, startHourUTC, startMinute],
+        end: [year, month, endDay, endHourUTC, endMinute],
+        categories: ['考试'],
+        alarms: [
+          {
+            action: 'display',
+            description: `${exam.courseName}考试将在60分钟后开始，考试地点：${exam.location}`,
+            trigger: { minutes: 60, before: true }
+          }
+        ]
+      };
+    });
+
+    const { error, value } = createEvents(events);
+    
+    if (error) {
+      console.error('生成ICS文件失败:', error);
+      return res.status(500).json({ error: '生成ICS文件失败' });
+    }
+    
+    // 生成唯一的文件ID
+    const fileId = generateFileId();
+    
+    // 构建下载链接
+    // 注意：这里的域名需要替换成您的实际域名
+    const downloadUrl = `https://njupt-exam-ics-builder.moonike.cloud/api/download-ics/${fileId}`;
+
+    // 返回下载链接
+    res.json({
+      success: true,
+      downloadUrl: downloadUrl,
+      fileId: fileId,
+      expiresIn: '24h' // 链接有效期
+    });
+
+  } catch (error) {
+    console.error('生成下载链接时出错:', error);
+    return res.status(500).json({ error: '生成下载链接失败' });
+  }
+}; 

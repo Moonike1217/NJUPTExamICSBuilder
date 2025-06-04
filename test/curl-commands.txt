@@ -1,0 +1,48 @@
+# Quick curl commands for testing local API
+
+# 1. Test get download link endpoint
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "examData": [
+      {
+        "courseName": "Computer Science",
+        "teacher": "Prof. Zhang",
+        "date": "2024-06-18",
+        "startTime": "13:30",
+        "endTime": "15:20",
+        "location": "Room 101",
+        "studentCount": 50
+      }
+    ]
+  }' \
+  http://localhost:3000/api/get-ics-link
+
+# 2. Test direct ICS generation endpoint
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "examData": [
+      {
+        "courseName": "Computer Science",
+        "teacher": "Prof. Zhang",
+        "date": "2024-06-18",
+        "startTime": "13:30",
+        "endTime": "15:20",
+        "location": "Room 101",
+        "studentCount": 50
+      }
+    ]
+  }' \
+  http://localhost:3000/api/generate-ics
+
+# 3. Test search by class id endpoint (original functionality)
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "classId": "B220422"
+  }' \
+  http://localhost:3000/api/search-by-class-id
+
+# 4. Download file using generated link (replace FILE_ID with actual value)
+curl -O http://localhost:3000/api/download-ics/FILE_ID 
