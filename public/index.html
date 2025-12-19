@@ -258,7 +258,7 @@
         <div class="alert alert-info">
           <h5><i class="fas fa-info-circle me-2"></i>使用说明：</h5>
           <ol>
-            <li>输入行政班ID以查询您的考试信息</li>
+            <li>输入行政班以查询您的考试信息</li>
             <li>点击"生成日历文件"按钮</li>
             <li>下载生成的 ICS 文件</li>
             <li>使用您的日历应用打开 ICS 文件</li>
@@ -270,20 +270,20 @@
       </div>
     </div>
 
-    <!-- 行政班ID查询区域 -->
+    <!-- 行政班查询区域 -->
     <div class="card mb-4 fade-in">
       <div class="card-header bg-light">
-        <h5 class="mb-0"><i class="fas fa-search me-2"></i>第一步：输入行政班ID查询考试信息</h5>
+        <h5 class="mb-0"><i class="fas fa-search me-2"></i>第一步：输入行政班查询考试信息</h5>
       </div>
       <div class="card-body">
         <form id="searchForm">
           <div class="mb-3">
-            <label for="studentId" class="form-label">行政班ID</label>
+            <label for="studentId" class="form-label">行政班</label>
             <div class="input-group">
               <span class="input-group-text"><i class="fas fa-id-card"></i></span>
               <input type="text" class="form-control" id="studentId" name="studentId" placeholder="例如: B220400" required>
             </div>
-            <div class="form-text">请输入完整行政班ID（如 B220400）</div>
+            <div class="form-text">请输入完整行政班（如 B220400）</div>
           </div>
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-search me-1"></i>查询考试信息
@@ -399,7 +399,7 @@
     <div id="result" class="d-none fade-in">
       <div class="alert alert-success">
         <h5><i class="fas fa-check-circle me-2"></i>日历文件已生成！</h5>
-        <p>ICS 文件下载已开始，请查看���览器下载区域</p>
+        <p>ICS 文件下载已开始，请查看浏览器下载区域</p>
       </div>
     </div>
 
@@ -416,7 +416,7 @@
       
       // 系统已预加载考试安排表，无需上传
       
-      // 行政班ID查询
+      // 行政班查询
       document.getElementById('searchForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -424,7 +424,7 @@
         const classIdRegex = /^[BQFP][0-9]{6}$/;
         
         if (!classIdRegex.test(classId)) {
-          showStatus('searchStatus', '<i class="fas fa-exclamation-triangle me-2"></i>行政班ID格式不正确，请重新检查！', 'danger');
+          showStatus('searchStatus', '<i class="fas fa-exclamation-triangle me-2"></i>行政班格式不正确，请重新检查！', 'danger');
           return;
         }
         
