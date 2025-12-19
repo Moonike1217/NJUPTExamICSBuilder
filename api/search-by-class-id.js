@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: '只支持POST请求' });
   }
 
-  const { classId, examData } = req.body;
+  const { classId } = req.body;
   
   // 验证行政班格式
   const classIdRegex = /^[BQFP][0-9]{6}$/;
@@ -29,21 +29,12 @@ module.exports = async (req, res) => {
   }
   
   try {
-    let workbook;
-    
-    // 检查是否有微信小程序传来的文件数据
-    if (examData && examData.fileData) {
-      // 处理Base64文件数据（微信小程序）
-      const buffer = Buffer.from(examData.fileData, 'base64');
-      workbook = XLSX.read(buffer, { type: 'buffer' });
-    } else {
-      // 检查本地Excel文件是否存在（Web版本）
-      if (!fs.existsSync(excelFilePath)) {
-        return res.status(400).json({ error: '考试安排表不存在，请上传Excel文件或联系管理员' });
-      }
-      // 读取本地Excel文件
-      workbook = XLSX.readFile(excelFilePath);
+    // 检查本地Excel文件是否存在
+    if (!fs.existsSync(excelFilePath)) {
+      return res.status(400).json({ error: '考试安排表不存在，请联系开发者！' });
     }
+    // 读取本地Excel文件
+    const workbook = XLSX.readFile(excelFilePath);
     
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -159,4 +150,4 @@ module.exports = async (req, res) => {
       error: '查询考试信息失败，请重试' 
     });
   }
-}; 
+};
