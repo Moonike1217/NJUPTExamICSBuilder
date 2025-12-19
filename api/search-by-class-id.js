@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   // 验证行政班格式
   const classIdRegex = /^[BQFP][0-9]{6}$/;
   if (!classIdRegex.test(classId)) {
-    return res.status(400).json({ error: '行政班ID格式不正确，请重新检查！' });
+    return res.status(400).json({ error: '行政班格式不正确，请重新检查！' });
   }
   
   try {
@@ -57,10 +57,8 @@ module.exports = async (req, res) => {
         if (key.includes('人数')) headers.studentCountColumn = key;
       }
     }
-    
-    console.log('检测到的表头:', headers);
-    
-    // 查找行政班ID对应的班级    
+
+    // 查找行政班对应的班级
     const classPrefix = classId;
     
     // 过滤得到行政班的考试信息
@@ -81,8 +79,8 @@ module.exports = async (req, res) => {
     if (examDataFiltered.length === 0) {
       return res.status(404).json({ 
         success: false, 
-        message: '未找到该行政班ID对应的考试信息',
-        error: '未找到该行政班ID对应的考试信息' 
+        message: '未找到该行政班对应的考试信息',
+        error: '未找到该行政班对应的考试信息'
       });
     }
     
@@ -122,6 +120,8 @@ module.exports = async (req, res) => {
             timeMatch[2] + ':00';
         }
       }
+
+      console.log(`行政班 ${classId} 考试信息生成成功`);
       
       return {
         course: exam[headers.courseNameColumn] || '',
@@ -143,7 +143,7 @@ module.exports = async (req, res) => {
       examData: formattedExams // 保持兼容性
     });
   } catch (error) {
-    console.error('查询考试信息失败:', error);
+    console.error(`行政班 ${classId} 考试信息查询失败 :`, error);
     return res.status(500).json({ 
       success: false,
       message: '查询考试信息失败，请重试',
