@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@vercel/analytics": "^1.6.1",
     "dayjs": "^1.11.10",
     "ics": "^3.7.2",
     "nanoid": "^3.3.7",
