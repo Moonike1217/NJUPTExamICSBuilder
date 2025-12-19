@@ -87,7 +87,7 @@ NJUPTExamICSBuilder/
 - HTML5 + JavaScript + Bootstrap 5
 
 ## 考试安排表截止日期
-- 2025-12-17
+- 2025-12-19
 
 ## 许可
 
