@@ -86,9 +86,6 @@ NJUPTExamICSBuilder/
 ### 前端
 - HTML5 + JavaScript + Bootstrap 5
 
-## 考试安排表截止日期
-- 2025-12-22
-
 ## 许可
 
 ISC 
