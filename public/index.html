@@ -334,65 +334,6 @@
       </div>
     </div>
 
-    <!-- 手动输入区域（备用） -->
-    <div class="card mb-4 d-none" id="manualInputCard">
-      <div class="card-header bg-light">
-        <h5 class="mb-0"><i class="fas fa-keyboard me-2"></i>手动输入考试信息</h5>
-      </div>
-      <div class="card-body">
-        <button type="button" id="showManualInputBtn" class="btn btn-outline-secondary">
-          <i class="fas fa-pen me-1"></i>切换到手动输入模式
-        </button>
-        
-        <div id="manualInputForm" class="d-none mt-3">
-          <div id="manualExamContainer">
-            <!-- 初始考试表单 -->
-            <div class="exam-form" data-index="0">
-              <div class="row">
-                <div class="col-12">
-                  <h5><i class="fas fa-file-alt me-2"></i>考试 #1</h5>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-12">
-                  <label for="courseName0" class="form-label">课程名称</label>
-                  <input type="text" class="form-control" id="courseName0" name="courseName0" required>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-4">
-                  <label for="date0" class="form-label">日期</label>
-                  <input type="date" class="form-control" id="date0" name="date0" required>
-                </div>
-                <div class="col-md-4">
-                  <label for="startTime0" class="form-label">开始时间</label>
-                  <input type="time" class="form-control" id="startTime0" name="startTime0" required>
-                </div>
-                <div class="col-md-4">
-                  <label for="endTime0" class="form-label">结束时间</label>
-                  <input type="time" class="form-control" id="endTime0" name="endTime0" required>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-12">
-                  <label for="location0" class="form-label">考试地点</label>
-                  <input type="text" class="form-control" id="location0" name="location0" required>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="d-grid gap-2 d-md-flex mb-4 mt-4">
-            <button type="button" id="addExamBtn" class="btn btn-outline-secondary">
-              <i class="fas fa-plus me-1"></i>添加另一场考试
-            </button>
-            <button type="button" id="manualGenerateBtn" class="btn btn-purple ms-auto">
-              <i class="fas fa-calendar-alt me-1"></i>生成日历文件
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div id="result" class="d-none fade-in">
       <div class="alert alert-success">
@@ -539,124 +480,6 @@
         });
       });
       
-      // 显示手动输入模式
-      document.getElementById('showManualInputBtn').addEventListener('click', function() {
-        const manualInputForm = document.getElementById('manualInputForm');
-        manualInputForm.classList.toggle('d-none');
-        
-        this.innerHTML = manualInputForm.classList.contains('d-none') ? 
-          '<i class="fas fa-pen me-1"></i>切换到手动输入模式' : 
-          '<i class="fas fa-times me-1"></i>隐藏手动输入表单';
-      });
-      
-      // 手动输入部分
-      let examCount = 1;
-      
-      // 添加考试按钮事件
-      document.getElementById('addExamBtn')?.addEventListener('click', function() {
-        examCount++;
-        const newIndex = examCount - 1;
-        
-        const examDiv = document.createElement('div');
-        examDiv.className = 'exam-form fade-in';
-        examDiv.setAttribute('data-index', newIndex);
-        
-        examDiv.innerHTML = `
-          <div class="row">
-            <div class="col-10">
-              <h5><i class="fas fa-file-alt me-2"></i>考试 #${examCount}</h5>
-            </div>
-            <div class="col-2 text-end">
-              <button type="button" class="btn btn-sm btn-outline-danger remove-exam">
-                <i class="fas fa-trash-alt"></i>
-              </button>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-12">
-              <label for="courseName${newIndex}" class="form-label">课程名称</label>
-              <input type="text" class="form-control" id="courseName${newIndex}" name="courseName${newIndex}" required>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-4">
-              <label for="date${newIndex}" class="form-label">日期</label>
-              <input type="date" class="form-control" id="date${newIndex}" name="date${newIndex}" required>
-            </div>
-            <div class="col-md-4">
-              <label for="startTime${newIndex}" class="form-label">开始时间</label>
-              <input type="time" class="form-control" id="startTime${newIndex}" name="startTime${newIndex}" required>
-            </div>
-            <div class="col-md-4">
-              <label for="endTime${newIndex}" class="form-label">结束时间</label>
-              <input type="time" class="form-control" id="endTime${newIndex}" name="endTime${newIndex}" required>
-            </div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-12">
-              <label for="location${newIndex}" class="form-label">考试地点</label>
-              <input type="text" class="form-control" id="location${newIndex}" name="location${newIndex}" required>
-            </div>
-          </div>
-        `;
-        
-        document.getElementById('manualExamContainer').appendChild(examDiv);
-        
-        // 为新添加的删除按钮添加事件
-        examDiv.querySelector('.remove-exam').addEventListener('click', function() {
-          examDiv.classList.add('fade-out');
-          setTimeout(() => examDiv.remove(), 300);
-        });
-      });
-      
-      // 手动生成日历按钮事件
-      document.getElementById('manualGenerateBtn')?.addEventListener('click', function() {
-        const examForms = document.querySelectorAll('#manualExamContainer .exam-form');
-        
-        // 检查表单是否填写完整
-        let formValid = true;
-        examForms.forEach(form => {
-          const inputs = form.querySelectorAll('input[required]');
-          inputs.forEach(input => {
-            if (!input.value) {
-              formValid = false;
-              input.classList.add('is-invalid');
-            } else {
-              input.classList.remove('is-invalid');
-            }
-          });
-        });
-        
-        if (!formValid) {
-          alert('请填写所有必填项');
-          return;
-        }
-        
-        // 收集表单数据
-        const examData = [];
-        examForms.forEach(examForm => {
-          const index = examForm.getAttribute('data-index');
-          
-          examData.push({
-            courseName: document.getElementById(`courseName${index}`).value,
-            date: document.getElementById(`date${index}`).value,
-            startTime: document.getElementById(`startTime${index}`).value,
-            endTime: document.getElementById(`endTime${index}`).value,
-            location: document.getElementById(`location${index}`).value
-          });
-        });
-        
-        // 添加加载效果
-        const btnText = this.innerHTML;
-        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>正在生成...';
-        this.disabled = true;
-        
-        generateICSFile(examData).then(() => {
-          // 恢复按钮状态
-          this.innerHTML = btnText;
-          this.disabled = false;
-        });
-      });
       
       // 生成ICS文件
       async function generateICSFile(examData) {
@@ -698,10 +521,6 @@
         statusElement.classList.remove('d-none');
       }
       
-      // 显示手动输入卡片（备用）
-      document.getElementById('manualInputCard').classList.remove('d-none');
-      
-      // 检查表格是否可以水平滑动
       function checkTableScrollable() {
         const tableResponsive = document.querySelector('.table-responsive');
         if (!tableResponsive) return;
