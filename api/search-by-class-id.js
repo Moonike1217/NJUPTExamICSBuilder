@@ -137,8 +137,17 @@ module.exports = async (req, res) => {
       };
     });
     
-    res.json({ 
-      success: true, 
+    // 排序：人数降序 → 时间降序
+    formattedExams.sort((a, b) => {
+      const diff = (Number(b.studentCount) || 0) - (Number(a.studentCount) || 0);
+      if (diff !== 0) return diff;
+      const ta = a.date + ' ' + a.startTime;
+      const tb = b.date + ' ' + b.startTime;
+      return tb.localeCompare(ta);
+    });
+
+    res.json({
+      success: true,
       data: formattedExams,
       examData: formattedExams // 保持兼容性
     });
